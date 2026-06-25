@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Deckmaker — Hướng dẫn sử dụng</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, 'Noto Sans', sans-serif;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 24px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #222;
+  }
+  h1 { font-size: 28px; border-bottom: 2px solid #4caf50; padding-bottom: 8px; }
+  h2 { font-size: 20px; margin-top: 32px; color: #2e7d32; }
+  h3 { font-size: 17px; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f5; font-weight: 600; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 14px; }
+  pre { background: #f5f5f5; padding: 12px 16px; border-radius: 4px; overflow-x: auto; }
+  blockquote { border-left: 4px solid #4caf50; margin: 12px 0; padding: 4px 16px; color: #555; background: #f9f9f9; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+  a { color: #1976d2; }
+</style>
+</head>
+<body>
+<h1>Deckmaker — Hướng dẫn sử dụng</h1>
+<h2>Chương trình này làm gì?</h2>
+<p>Từ một file <code>vocab.csv</code> chứa danh sách từ vựng, chương trình sẽ tự động tạo ra
+bộ thẻ Anki (file <code>.apkg</code>) gồm <strong>hai loại thẻ</strong> để bạn ôn tập:</p>
+<ol>
+<li>
+<p><strong>Thẻ từ vựng cơ bản</strong> — Mặt trước hiển thị từ tiếng Anh kèm nút phát âm.
+   Mặt sau hiển thị nghĩa tiếng Việt và câu ví dụ.</p>
+</li>
+<li>
+<p><strong>Thẻ trắc nghiệm (MCQ)</strong> — Một câu ví dụ bị khuyết từ, bạn chọn từ đúng
+   trong 4 đáp án. Mặt sau tô màu xanh (đúng) / đỏ (sai) và hiển thị đáp án.</p>
+</li>
+</ol>
+<h2>Yêu cầu Add-on Anki (quan trọng — làm trước khi import)</h2>
+<p>Để thẻ trắc nghiệm hoạt động đúng, bạn <strong>cần cài addon</strong> sau trong Anki:</p>
+<ol>
+<li>Mở Anki, vào <strong>Tools → Add-ons</strong> (Công cụ → Tiện ích)</li>
+<li>Nhấn <strong>Get Add-ons…</strong> (Tải tiện ích…)</li>
+<li>Nhập mã: <strong><code>1566095810</code></strong></li>
+<li>Nhấn OK, sau đó <strong>khởi động lại Anki</strong></li>
+</ol>
+<h2>Yêu cầu</h2>
+<ul>
+<li><strong>File <code>vocab.csv</code></strong> đặt cùng thư mục với <code>deckmaker.exe</code></li>
+<li>File CSV phải có <strong>đúng 6 cột</strong> với tên như sau (hàng đầu tiên là tiêu đề):</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Từ</th>
+<th>Phát âm</th>
+<th>Loại từ</th>
+<th>Ý nghĩa</th>
+<th>Ví dụ</th>
+<th>Ghi chú</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 Mở file CSV mẫu bằng Excel hoặc Notepad để xem cấu trúc.
+Lưu ý: file phải được lưu với encoding <strong>UTF-8</strong>.</p>
+</blockquote>
+<ul>
+<li><strong>Anki</strong> đã được cài đặt trên máy tính.</li>
+</ul>
+<h2>Cách chạy</h2>
+<h3>Cách 1: Nhấp đúp chuột</h3>
+<p>Nhấp đúp vào <code>deckmaker.exe</code>. Một cửa sổ dòng lệnh sẽ hiện ra, hiển thị tiến
+trình tạo thẻ. Khi thấy dòng <code>✅ ielts_vocab.apkg</code> là xong.</p>
+<h3>Cách 2: Chạy từ Command Prompt / PowerShell</h3>
+<p>Mở Command Prompt hoặc PowerShell trong thư mục chứa chương trình, gõ:</p>
+<pre><code class="language-cmd">deckmaker.exe
+</code></pre>
+<p>Nếu bạn đã có sẵn file âm thanh trong thư mục <code>audio\</code> và không muốn tải lại, dùng:</p>
+<pre><code class="language-cmd">deckmaker.exe --no-audio
+</code></pre>
+<h2>Kết quả</h2>
+<p>Sau khi chạy xong, trong thư mục sẽ có:</p>
+<table>
+<thead>
+<tr>
+<th>File / Thư mục</th>
+<th>Mô tả</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ielts_vocab.apkg</code></td>
+<td>Bộ thẻ Anki — <strong>đây là file bạn cần import</strong></td>
+</tr>
+<tr>
+<td><code>audio\</code></td>
+<td>Thư mục chứa file âm thanh phát âm từng từ</td>
+</tr>
+</tbody>
+</table>
+<h2>Import vào Anki</h2>
+<ol>
+<li>Mở <strong>Anki</strong></li>
+<li>Vào menu <strong>File → Import…</strong> (hoặc Tệp → Nhập…)</li>
+<li>Chọn file <code>ielts_vocab.apkg</code></li>
+<li>Nhấn <strong>Import</strong> (hoặc Nhập)</li>
+<li>Xong! Bộ thẻ "IELTS Vocabulary" sẽ xuất hiện trong danh sách deck của bạn</li>
+</ol>
+<h2>Hai loại thẻ trong bộ deck</h2>
+<h3>1. Thẻ Từ → Nghĩa</h3>
+<ul>
+<li><strong>Mặt trước:</strong> từ tiếng Anh (chữ to), phiên âm IPA, loại từ, và nút ▶ để
+  nghe phát âm</li>
+<li><strong>Mặt sau:</strong> nghĩa tiếng Việt, câu ví dụ, ghi chú (nếu có)</li>
+</ul>
+<h3>2. Thẻ Trắc nghiệm (MCQ)</h3>
+<ul>
+<li><strong>Mặt trước:</strong> câu ví dụ bị khuyết từ, bên dưới là 4 lựa chọn (radio button).
+  Chọn một đáp án rồi nhấn <strong>Show Answer</strong>.</li>
+<li><strong>Mặt sau:</strong></li>
+<li>Bảng lựa chọn của bạn được tô màu: 🟢 xanh = đúng, 🔴 đỏ = sai</li>
+<li>Bảng đáp án đúng bên dưới</li>
+<li>Hiển thị "Correct!" nếu bạn chọn đúng, hoặc "Nope." nếu sai</li>
+<li>Nghĩa tiếng Việt và câu đầy đủ</li>
+</ul>
+<h2>Xử lý sự cố</h2>
+<table>
+<thead>
+<tr>
+<th>Vấn đề</th>
+<th>Cách khắc phục</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"File not found: vocab.csv"</td>
+<td>Đảm bảo file <code>vocab.csv</code> nằm <strong>cùng thư mục</strong> với <code>deckmaker.exe</code></td>
+</tr>
+<tr>
+<td>File CSV bị lỗi font/chữ</td>
+<td>Mở file CSV bằng Notepad, chọn <strong>Save As → UTF-8</strong></td>
+</tr>
+<tr>
+<td>Thẻ trắc nghiệm không hiển thị đúng</td>
+<td>Kiểm tra đã cài addon <code>1566095810</code> và khởi động lại Anki chưa</td>
+</tr>
+<tr>
+<td>Không có âm thanh phát âm</td>
+<td>Đảm bảo máy tính có kết nối Internet khi chạy chương trình</td>
+</tr>
+<tr>
+<td>Chương trình báo lỗi âm thanh</td>
+<td>Chạy lại với <code>--no-audio</code>, thẻ vẫn dùng được chỉ thiếu phần phát âm</td>
+</tr>
+<tr>
+<td>Windows SmartScreen chặn file .exe</td>
+<td>Nhấn <strong>More info → Run anyway</strong> (Thông tin thêm → Vẫn chạy)</td>
+</tr>
+</tbody>
+</table>
+<h2>Thông tin thêm</h2>
+<ul>
+<li>Chương trình sử dụng công nghệ <strong>Google Text-to-Speech</strong> để tạo giọng đọc —
+  cần kết nối Internet khi tạo audio.</li>
+<li>Mỗi lần chạy, chương trình chỉ tải audio cho những từ chưa có — các từ đã có
+  sẽ được bỏ qua.</li>
+<li>File <code>ielts_vocab.apkg</code> sẽ bị <strong>ghi đè</strong> mỗi lần chạy.</li>
+<li>Muốn thêm/sửa từ vựng: chỉnh sửa file <code>vocab.csv</code> rồi chạy lại chương trình.</li>
+</ul>
+</body>
+</html>
