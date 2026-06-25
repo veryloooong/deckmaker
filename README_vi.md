@@ -1,110 +1,151 @@
-# Deckmaker — Hướng dẫn sử dụng
+# Deckmaker — Hướng dẫn từng bước cho người mới bắt đầu
 
 ## Chương trình này làm gì?
 
-Từ một file `vocab.csv` chứa danh sách từ vựng, chương trình sẽ tự động tạo ra
-bộ thẻ Anki (file `.apkg`) gồm **hai loại thẻ** để bạn ôn tập:
+Bạn có một danh sách từ vựng IELTS trong Google Sheets. Chương trình này sẽ
+biến danh sách đó thành **bộ thẻ Anki** để bạn ôn tập, bao gồm:
 
-1. **Thẻ từ vựng cơ bản** — Mặt trước hiển thị từ tiếng Anh kèm nút phát âm.
-   Mặt sau hiển thị nghĩa tiếng Việt và câu ví dụ.
+1. **Thẻ từ vựng** — mặt trước hiện từ tiếng Anh + nút nghe phát âm, mặt sau
+   hiện nghĩa tiếng Việt và câu ví dụ.
+2. **Thẻ trắc nghiệm** — câu ví dụ khuyết từ, bạn chọn đáp án đúng trong 4 lựa
+   chọn. Mặt sau tô xanh/đỏ và cho biết bạn chọn đúng hay sai.
 
-2. **Thẻ trắc nghiệm (MCQ)** — Một câu ví dụ bị khuyết từ, bạn chọn từ đúng
-   trong 4 đáp án. Mặt sau tô màu xanh (đúng) / đỏ (sai) và hiển thị đáp án.
+Tất cả chỉ cần **3 bước** bên dưới.
 
-## Yêu cầu Add-on Anki (quan trọng — làm trước khi import)
+---
 
-Để thẻ trắc nghiệm hoạt động đúng, bạn **cần cài addon** sau trong Anki:
+## Bước 1: Tải file CSV từ Google Sheets
 
-1. Mở Anki, vào **Tools → Add-ons** (Công cụ → Tiện ích)
-2. Nhấn **Get Add-ons…** (Tải tiện ích…)
+File CSV là file dữ liệu chứa danh sách từ vựng của bạn. Bạn sẽ tải nó về từ
+Google Sheets.
+
+1. Mở Google Sheets chứa danh sách từ vựng của bạn.
+2. Vào menu **File → Download → Comma Separated Values (.csv)**.
+3. File sẽ được tải về máy (thường nằm trong thư mục **Downloads**).
+
+> ⚠️ **Quan trọng:** File CSV của bạn phải có **đúng 6 cột** với tên như sau
+> (hàng đầu tiên là tiêu đề, viết đúng chính tả và dấu):
+>
+> | Từ  | Phát âm | Loại từ | Ý nghĩa | Ví dụ | Ghi chú |
+> | --- | ------- | ------- | ------- | ----- | ------- |
+
+---
+
+## Bước 2: Đổi tên file và đặt vào thư mục
+
+Sau khi tải về, file của bạn sẽ có tên giống tên Google Sheets (ví dụ:
+`Kế hoạch ôn thi IELTS - Từ vựng.csv`). Bạn cần đổi tên nó thành `vocab.csv`
+và đặt cùng chỗ với chương trình.
+
+1. Mở thư mục **Downloads** (hoặc nơi bạn vừa tải file về).
+2. Tìm file CSV vừa tải, **nhấp chuột phải → Rename** (Đổi tên).
+3. Gõ đúng tên: **`vocab.csv`**
+4. **Copy** file `vocab.csv` đó vào thư mục chứa `deckmaker.exe`.
+   - Nếu bạn chưa giải nén: giải nén file `.zip` bạn nhận được ra một thư mục,
+     sau đó dán file `vocab.csv` vào thư mục đó.
+
+> 💡 **Mẹo:** Sau khi copy vào, mở thư mục đó lên bạn sẽ thấy `deckmaker.exe`
+> và `vocab.csv` nằm cạnh nhau — như vậy là đúng.
+
+---
+
+## Bước 3: Chạy chương trình
+
+### Cách đơn giản nhất: Nhấp đúp chuột
+
+1. Nhấp đúp vào file **`deckmaker.exe`**.
+2. Một cửa sổ màu đen (dòng lệnh) sẽ hiện ra, chạy khoảng 1-2 phút.
+3. Khi thấy dòng **`✅ vocab.apkg`** là xong! Cửa sổ sẽ tự đóng.
+
+> ℹ️ Lần đầu chạy, Windows có thể hiện cảnh báo "Windows protected your PC".
+> Nhấn **More info** (Thông tin thêm) rồi **Run anyway** (Vẫn chạy).
+
+### Nếu muốn chạy lại (đã có sẵn âm thanh)
+
+Khi chạy lại lần sau, nếu bạn không muốn tải lại file phát âm (đỡ tốn thời gian):
+
+1. Mở thư mục chứa `deckmaker.exe`.
+2. Gõ **`cmd`** vào thanh địa chỉ của File Explorer, nhấn Enter.
+3. Trong cửa sổ đen hiện ra, gõ:
+   ```
+   deckmaker.exe --no-audio
+   ```
+4. Nhấn Enter.
+
+---
+
+## ⚠️ Cần làm trước khi import: Cài Add-on cho thẻ trắc nghiệm
+
+Để thẻ trắc nghiệm hiển thị đúng (tô màu xanh/đỏ, hiện đúng/sai), bạn **phải**
+cài add-on này trong Anki **trước khi import**:
+
+1. Mở Anki, vào **Tools → Add-ons** (Công cụ → Tiện ích).
+2. Nhấn **Get Add-ons…** (Tải tiện ích…).
 3. Nhập mã: **`1566095810`**
-4. Nhấn OK, sau đó **khởi động lại Anki**
+4. Nhấn OK, sau đó **khởi động lại Anki**.
 
-## Yêu cầu
+> Nếu quên cài add-on này, thẻ trắc nghiệm sẽ không hoạt động. Bạn vẫn có thể
+> cài add-on sau đó, nhưng cần import lại file `.apkg`.
 
-- **File `vocab.csv`** đặt cùng thư mục với `deckmaker.exe`
-- File CSV phải có **đúng 6 cột** với tên như sau (hàng đầu tiên là tiêu đề):
+---
 
-  | Từ  | Phát âm | Loại từ | Ý nghĩa | Ví dụ | Ghi chú |
-  | --- | ------- | ------- | ------- | ----- | ------- |
+## Bước 4: Import vào Anki
 
-  > 💡 Mở file CSV mẫu bằng Excel hoặc Notepad để xem cấu trúc.
-  > Lưu ý: file phải được lưu với encoding **UTF-8**.
+Sau khi chạy xong, trong thư mục sẽ có file **`vocab.apkg`**. Đây chính là bộ
+thẻ của bạn.
 
-- **Anki** đã được cài đặt trên máy tính.
+1. Mở **Anki**.
+2. Vào menu **File → Import…** (Tệp → Nhập…).
+3. Chọn file `vocab.apkg`.
+4. Nhấn **Import** (Nhập).
+5. Một cửa sổ nhỏ hiện ra báo đã import thành công — **nhấn Close** (Đóng) để
+   tắt nó đi.
+6. Bộ thẻ "IELTS Vocabulary" giờ đã xuất hiện ở màn hình chính của Anki.
 
-## Cách chạy
+### Cách học bộ thẻ
 
-### Cách 1: Nhấp đúp chuột
+Sau khi import xong, đây là cách bạn bắt đầu ôn tập:
 
-Nhấp đúp vào `deckmaker.exe`. Một cửa sổ dòng lệnh sẽ hiện ra, hiển thị tiến
-trình tạo thẻ. Khi thấy dòng `✅ ielts_vocab.apkg` là xong.
+1. Ở màn hình chính của Anki, bạn sẽ thấy một mục tên là **"IELTS Vocabulary"**.
+2. **Nhấp chuột** vào tên đó để chọn nó (nó sẽ được tô sáng lên).
+3. Nhấn nút **Study Now** (Học ngay) ở phía trên.
+4. Thẻ đầu tiên sẽ hiện ra — bạn xem câu hỏi, cố gắng nhớ đáp án, rồi nhấn
+   **Show Answer** (Hiện đáp án) để xem mặt sau.
+5. Ở mặt sau, bạn tự đánh giá mức độ nhớ của mình bằng cách nhấn một trong các nút:
+   - **Again** (Lại) — chưa nhớ được, thẻ này sẽ hỏi lại sớm.
+   - **Hard** (Khó) — có nhớ nhưng hơi vất vả.
+   - **Good** (Tốt) — nhớ được bình thường.
+   - **Easy** (Dễ) — quá dễ, không cần hỏi lại sớm.
+6. Tiếp tục với các thẻ tiếp theo cho đến khi hết. Mỗi ngày Anki sẽ tự động đưa
+   ra những thẻ đến hạn ôn tập cho bạn — bạn chỉ cần mở Anki lên và nhấn
+   **Study Now** là được.
 
-### Cách 2: Chạy từ Command Prompt / PowerShell
+---
 
-Mở Command Prompt hoặc PowerShell trong thư mục chứa chương trình, gõ:
+## Kết quả sau khi chạy
 
-```cmd
-deckmaker.exe
-```
+| File / Thư mục    | Là gì?                                       |
+| ----------------- | -------------------------------------------- |
+| `vocab.apkg`      | Bộ thẻ Anki — **file bạn cần import**        |
+| `audio\`          | Thư mục chứa file âm thanh phát âm từng từ   |
 
-Nếu bạn đã có sẵn file âm thanh trong thư mục `audio\` và không muốn tải lại, dùng:
-
-```cmd
-deckmaker.exe --no-audio
-```
-
-## Kết quả
-
-Sau khi chạy xong, trong thư mục sẽ có:
-
-| File / Thư mục     | Mô tả                                        |
-| ------------------ | -------------------------------------------- |
-| `ielts_vocab.apkg` | Bộ thẻ Anki — **đây là file bạn cần import** |
-| `audio\`           | Thư mục chứa file âm thanh phát âm từng từ   |
-
-## Import vào Anki
-
-1. Mở **Anki**
-2. Vào menu **File → Import…** (hoặc Tệp → Nhập…)
-3. Chọn file `ielts_vocab.apkg`
-4. Nhấn **Import** (hoặc Nhập)
-5. Xong! Bộ thẻ "IELTS Vocabulary" sẽ xuất hiện trong danh sách deck của bạn
-
-## Hai loại thẻ trong bộ deck
-
-### 1. Thẻ Từ → Nghĩa
-
-- **Mặt trước:** từ tiếng Anh (chữ to), phiên âm IPA, loại từ, và nút ▶ để
-  nghe phát âm
-- **Mặt sau:** nghĩa tiếng Việt, câu ví dụ, ghi chú (nếu có)
-
-### 2. Thẻ Trắc nghiệm (MCQ)
-
-- **Mặt trước:** câu ví dụ bị khuyết từ, bên dưới là 4 lựa chọn (radio button).
-  Chọn một đáp án rồi nhấn **Show Answer**.
-- **Mặt sau:**
-  - Bảng lựa chọn của bạn được tô màu: 🟢 xanh = đúng, 🔴 đỏ = sai
-  - Bảng đáp án đúng bên dưới
-  - Hiển thị "Correct!" nếu bạn chọn đúng, hoặc "Nope." nếu sai
-  - Nghĩa tiếng Việt và câu đầy đủ
+---
 
 ## Xử lý sự cố
 
 | Vấn đề                              | Cách khắc phục                                                      |
 | ----------------------------------- | ------------------------------------------------------------------- |
-| "File not found: vocab.csv"         | Đảm bảo file `vocab.csv` nằm **cùng thư mục** với `deckmaker.exe`   |
-| File CSV bị lỗi font/chữ            | Mở file CSV bằng Notepad, chọn **Save As → UTF-8**                  |
-| Thẻ trắc nghiệm không hiển thị đúng | Kiểm tra đã cài addon `1566095810` và khởi động lại Anki chưa       |
-| Không có âm thanh phát âm           | Đảm bảo máy tính có kết nối Internet khi chạy chương trình          |
-| Chương trình báo lỗi âm thanh       | Chạy lại với `--no-audio`, thẻ vẫn dùng được chỉ thiếu phần phát âm |
-| Windows SmartScreen chặn file .exe  | Nhấn **More info → Run anyway** (Thông tin thêm → Vẫn chạy)         |
+| "File not found: vocab.csv"         | File `vocab.csv` chưa nằm cùng thư mục với `deckmaker.exe`. Copy nó vào. |
+| File CSV bị lỗi font / chữ lạ       | Mở file CSV bằng Notepad, chọn **File → Save As → UTF-8**, lưu lại. |
+| Không có âm thanh                   | Máy cần có Internet khi chạy chương trình.                          |
+| Thẻ trắc nghiệm không hiển thị đúng | Chưa cài add-on `1566095810`. Vào Anki cài rồi import lại.         |
+| Windows SmartScreen chặn file .exe  | Nhấn **More info → Run anyway**.                                    |
 
-## Thông tin thêm
+---
 
-- Chương trình sử dụng công nghệ **Google Text-to-Speech** để tạo giọng đọc —
-  cần kết nối Internet khi tạo audio.
-- Mỗi lần chạy, chương trình chỉ tải audio cho những từ chưa có — các từ đã có
-  sẽ được bỏ qua.
-- File `ielts_vocab.apkg` sẽ bị **ghi đè** mỗi lần chạy.
-- Muốn thêm/sửa từ vựng: chỉnh sửa file `vocab.csv` rồi chạy lại chương trình.
+## Ghi chú thêm
+
+- Chương trình dùng **Google Text-to-Speech** để đọc từ — cần có mạng khi tạo audio.
+- Mỗi lần chạy, chỉ tải audio cho **từ mới**, từ đã có thì bỏ qua.
+- File `vocab.apkg` sẽ bị **ghi đè** mỗi lần chạy.
+- Muốn thêm/sửa từ: sửa Google Sheets → tải lại CSV → đổi tên → chạy lại chương trình.
