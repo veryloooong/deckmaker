@@ -14,6 +14,7 @@ import sys
 import time
 
 import genanki
+from genanki.util import guid_for
 from gtts import gTTS
 
 # ═══════════════════════════════════════════════════════════════════
@@ -542,6 +543,14 @@ def main() -> None:
         deck.add_note(
             genanki.Note(
                 model=MCQ_MODEL,
+                # Stable GUID keyed on (word, example), NOT on the full field
+                # list: MCQ fields include randomly-shuffled distractors, so a
+                # content-derived GUID would change every build and re-import
+                # would duplicate every MCQ card (resetting progress). Anki
+                # dedupes on GUID — a stable one means re-importing only adds
+                # genuinely new cards. The example is included so a word with
+                # several example rows keeps one distinct card per row.
+                guid=guid_for("mcq", w["word"], w["example"]),
                 fields=[
                     blanked,
                     options[0],

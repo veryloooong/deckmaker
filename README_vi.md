@@ -143,9 +143,28 @@ Sau khi import xong, đây là cách bạn bắt đầu ôn tập:
 
 ---
 
+## Cập nhật danh sách từ vựng
+
+Khi bạn thêm từ mới hoặc sửa từ cũ trong Google Sheets, bạn cần làm lại bộ thẻ
+để những thay đổi đó xuất hiện trong Anki. Các bước làm:
+
+1. Mở Google Sheets, thêm/sửa từ xong thì vào **File → Download → Comma
+   Separated Values (.csv)** để tải file mới về.
+2. **Đổi tên** file vừa tải thành `vocab.csv`.
+3. Copy file `vocab.csv` mới vào thư mục chứa `deckmaker.exe`, **ghi đè** lên
+   file cũ.
+4. Chạy lại chương trình (nhấp đúp `deckmaker.exe`).
+5. Vào Anki, import lại file `vocab.apkg` mới (giống hệt Bước 4 ở trên).
+   Những từ đã học sẽ được giữ nguyên, chỉ có từ mới được thêm vào.
+
+> 💡 Nếu bạn chỉ muốn thêm từ mà không muốn tải lại toàn bộ audio, dùng
+> `--no-audio` như hướng dẫn ở Bước 3. Audio của từ cũ vẫn giữ nguyên, chỉ
+> thiếu phát âm cho từ mới thêm.
+
+---
+
 ## Ghi chú thêm
 
 - Chương trình dùng **Google Text-to-Speech** để đọc từ — cần có mạng khi tạo audio.
 - Mỗi lần chạy, chỉ tải audio cho **từ mới**, từ đã có thì bỏ qua.
 - File `vocab.apkg` sẽ bị **ghi đè** mỗi lần chạy.
-- Muốn thêm/sửa từ: sửa Google Sheets → tải lại CSV → đổi tên → chạy lại chương trình.

@@ -208,10 +208,28 @@ thẻ của bạn.</p>
 </tbody>
 </table>
 <hr />
+<h2>Cập nhật danh sách từ vựng</h2>
+<p>Khi bạn thêm từ mới hoặc sửa từ cũ trong Google Sheets, bạn cần làm lại bộ thẻ
+để những thay đổi đó xuất hiện trong Anki. Các bước làm:</p>
+<ol>
+<li>Mở Google Sheets, thêm/sửa từ xong thì vào <strong>File → Download → Comma
+   Separated Values (.csv)</strong> để tải file mới về.</li>
+<li><strong>Đổi tên</strong> file vừa tải thành <code>vocab.csv</code>.</li>
+<li>Copy file <code>vocab.csv</code> mới vào thư mục chứa <code>deckmaker.exe</code>, <strong>ghi đè</strong> lên
+   file cũ.</li>
+<li>Chạy lại chương trình (nhấp đúp <code>deckmaker.exe</code>).</li>
+<li>Vào Anki, import lại file <code>vocab.apkg</code> mới (giống hệt Bước 4 ở trên).
+   Những từ đã học sẽ được giữ nguyên, chỉ có từ mới được thêm vào.</li>
+</ol>
+<blockquote>
+<p>💡 Nếu bạn chỉ muốn thêm từ mà không muốn tải lại toàn bộ audio, dùng
+<code>--no-audio</code> như hướng dẫn ở Bước 3. Audio của từ cũ vẫn giữ nguyên, chỉ
+thiếu phát âm cho từ mới thêm.</p>
+</blockquote>
+<hr />
 <h2>Ghi chú thêm</h2>
 <ul>
 <li>Chương trình dùng <strong>Google Text-to-Speech</strong> để đọc từ — cần có mạng khi tạo audio.</li>
 <li>Mỗi lần chạy, chỉ tải audio cho <strong>từ mới</strong>, từ đã có thì bỏ qua.</li>
 <li>File <code>vocab.apkg</code> sẽ bị <strong>ghi đè</strong> mỗi lần chạy.</li>
-<li>Muốn thêm/sửa từ: sửa Google Sheets → tải lại CSV → đổi tên → chạy lại chương trình.</li>
 </ul></body></html>

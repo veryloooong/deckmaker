@@ -49,6 +49,24 @@ python deckmaker.py --no-audio
 This reads `vocab.csv` and produces `vocab.apkg` —
 import it into Anki via **File → Import**.
 
+## Updating an existing deck (adding words)
+
+Cards are matched on a stable ID, so re-importing is safe: **existing cards keep
+their progress; only genuinely new words are added.** Workflow:
+
+1. Add the new word(s) to `vocab.csv`
+2. Re-run deckmaker
+3. Re-import `vocab.apkg` (File → Import) — Anki merges into the existing deck
+
+> **One-time migration note:** decks built *before* the stable-ID fix carry
+> random IDs and will duplicate once on the first re-import. To get a clean deck,
+> delete the old "IELTS Vocabulary" deck in Anki and re-import once. After that,
+> all re-imports are incremental.
+
+Editing a word's text in `vocab.csv` changes its ID, so the old card is left
+behind and a new one is added. Revert the edit (or delete the old card) to keep
+things tidy.
+
 ## Card Types
 
 ### 1. Word → Meaning (with audio)
