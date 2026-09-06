@@ -37,3 +37,6 @@ uv run python deckmaker.py --no-audio  # skip TTS, use existing audio/ files
   first re-import after the fix adds one duplicate MCQ set. Delete the old deck in Anki
   and re-import once to get a clean, stable deck; future re-imports are incremental.
 - Rewrite of the shipped `dist/deckmaker.exe`: `uv pip install pyinstaller && pyinstaller --onefile --console --name deckmaker --collect-all gtts deckmaker.py`.
+  This is now automated: `.github/workflows/build-exe.yml` builds `dist/deckmaker.exe`
+  on Windows on every push to `main` (artifact `deckmaker-windows`) and attaches it
+  to a GitHub Release when a tag `v*` is pushed. Add-ons/tagging assumed; CI needs no secrets.
