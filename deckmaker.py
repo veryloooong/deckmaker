@@ -478,6 +478,11 @@ def main() -> None:
         print("  No words found. Exiting.")
         return
 
+    # Scramble study order so the deck isn't grouped by CSV layout (categories
+    # etc.). Safe for incremental imports: note GUIDs are content-derived
+    # (word + example), not position-derived, so re-import dedup is unaffected.
+    random.shuffle(words)
+
     # ── 2. Audio ──────────────────────────────────────────────────
     os.makedirs(AUDIO_DIR, exist_ok=True)
     media_files: list[str] = []
