@@ -1,5 +1,9 @@
 # Deckmaker — Hướng dẫn từng bước cho người mới bắt đầu
 
+[🇬🇧 English](README.md)
+
+> **Lưu ý:** Tài liệu này đã được AI cập nhật bổ sung liên kết chuyển đổi ngôn ngữ, hướng dẫn tính năng kéo-thả (drag-and-drop) file CSV bất kỳ, và đồng bộ nội dung với bản tiếng Anh.
+
 ## Chương trình này làm gì?
 
 Bạn có một danh sách từ vựng IELTS trong Google Sheets. Chương trình này sẽ
@@ -31,46 +35,53 @@ Google Sheets.
 
 ---
 
-## Bước 2: Đổi tên file và đặt vào thư mục
+## Bước 2: Chuẩn bị file CSV
 
-Sau khi tải về, file của bạn sẽ có tên giống tên Google Sheets (ví dụ:
-`Kế hoạch ôn thi IELTS - Từ vựng.csv`). Bạn cần đổi tên nó thành `vocab.csv`
-và đặt cùng chỗ với chương trình.
+Bạn **không cần phải đổi tên file** thành `vocab.csv` nữa. Chương trình có thể đọc bất kỳ file CSV nào có đủ 6 cột tiêu đề ở Bước 1.
 
-1. Mở thư mục **Downloads** (hoặc nơi bạn vừa tải file về).
-2. Tìm file CSV vừa tải, **nhấp chuột phải → Rename** (Đổi tên).
-3. Gõ đúng tên: **`vocab.csv`**
-4. **Copy** file `vocab.csv` đó vào thư mục chứa `deckmaker.exe`.
-   - Nếu bạn chưa giải nén: giải nén file `.zip` bạn nhận được ra một thư mục,
-     sau đó dán file `vocab.csv` vào thư mục đó.
-
-> 💡 **Mẹo:** Sau khi copy vào, mở thư mục đó lên bạn sẽ thấy `deckmaker.exe`
-> và `vocab.csv` nằm cạnh nhau — như vậy là đúng.
+File `.apkg` kết quả sẽ được tạo ra ngay tại thư mục chứa file CSV của bạn (ví dụ: `IELTS_Vocab.csv` sẽ tạo ra `IELTS_Vocab.apkg`).
 
 ---
 
 ## Bước 3: Chạy chương trình
 
-### Cách đơn giản nhất: Nhấp đúp chuột
+### Cách 1 (Dễ nhất): Kéo và thả file CSV vào deckmaker.exe
 
-1. Nhấp đúp vào file **`deckmaker.exe`**.
-2. Một cửa sổ màu đen (dòng lệnh) sẽ hiện ra, chạy khoảng 1-2 phút.
-3. Khi thấy dòng **`✅ vocab.apkg`** là xong! Cửa sổ sẽ tự đóng.
+1. Mở thư mục chứa file CSV bạn vừa tải về và thư mục chứa **`deckmaker.exe`**.
+2. **Kéo file CSV thả thẳng vào file `deckmaker.exe`**.
+3. Cửa sổ dòng lệnh sẽ hiện ra và xử lý. Khi xong, bạn sẽ thấy thông báo:
+   **`✅ [Tên-file].apkg`**.
+4. Nhấn Enter để đóng cửa sổ nếu có lời nhắc.
+
+### Cách 2: Nhấp đúp chuột
+
+1. Nếu bạn để file có tên `vocab.csv` cùng thư mục với `deckmaker.exe`: chỉ cần **nhấp đúp** vào `deckmaker.exe`.
+2. Nếu không tìm thấy file `vocab.csv`, chương trình sẽ hỏi bạn: bạn chỉ cần **kéo file CSV thả vào cửa sổ màn hình đen** rồi nhấn Enter.
+
 
 > ℹ️ Lần đầu chạy, Windows có thể hiện cảnh báo "Windows protected your PC".
 > Nhấn **More info** (Thông tin thêm) rồi **Run anyway** (Vẫn chạy).
 
-### Nếu muốn chạy lại (đã có sẵn âm thanh)
+### Cách 3: Chạy bằng dòng lệnh (Terminal / Python)
 
-Khi chạy lại lần sau, nếu bạn không muốn tải lại file phát âm (đỡ tốn thời gian):
+Nếu bạn là lập trình viên hoặc muốn chạy từ terminal:
 
-1. Mở thư mục chứa `deckmaker.exe`.
-2. Gõ **`cmd`** vào thanh địa chỉ của File Explorer, nhấn Enter.
-3. Trong cửa sổ đen hiện ra, gõ:
-   ```
-   deckmaker.exe --no-audio
-   ```
-4. Nhấn Enter.
+```bash
+# Chạy với file vocab.csv mặc định (hoặc nhập đường dẫn nếu chưa có)
+python deckmaker.py
+
+# Chạy với file CSV cụ thể
+python deckmaker.py duong/dan/tu_vung.csv
+
+# Bỏ qua tạo file phát âm (nếu file audio đã có sẵn)
+python deckmaker.py duong/dan/tu_vung.csv --no-audio
+```
+
+Với file `.exe` trên Windows:
+
+```powershell
+.\dist\deckmaker.exe [duong\dan\tu_vung.csv] [--no-audio]
+```
 
 ---
 
@@ -91,12 +102,11 @@ cài add-on này trong Anki **trước khi import**:
 
 ## Bước 4: Import vào Anki
 
-Sau khi chạy xong, trong thư mục sẽ có file **`vocab.apkg`**. Đây chính là bộ
-thẻ của bạn.
+Sau khi chạy xong, trong thư mục chứa file CSV sẽ có file **`<tên-file>.apkg`** (ví dụ: `vocab.apkg`). Đây chính là bộ thẻ của bạn.
 
 1. Mở **Anki**.
 2. Vào menu **File → Import…** (Tệp → Nhập…).
-3. Chọn file `vocab.apkg`.
+3. Chọn file `<tên-file>.apkg`.
 4. Nhấn **Import** (Nhập).
 5. Một cửa sổ nhỏ hiện ra báo đã import thành công — **nhấn Close** (Đóng) để
    tắt nó đi.
@@ -124,47 +134,40 @@ Sau khi import xong, đây là cách bạn bắt đầu ôn tập:
 
 ## Kết quả sau khi chạy
 
-| File / Thư mục    | Là gì?                                       |
-| ----------------- | -------------------------------------------- |
-| `vocab.apkg`      | Bộ thẻ Anki — **file bạn cần import**        |
-| `audio\`          | Thư mục chứa file âm thanh phát âm từng từ   |
+| File / Thư mục      | Là gì?                                                            |
+| ------------------- | ----------------------------------------------------------------- |
+| `<tên-file>.apkg`   | Bộ thẻ Anki kết quả — **file bạn cần import vào Anki**            |
+| `audio/`            | Thư mục lưu trữ các file phát âm mp3 (dùng chung giữa các lần)   |
 
 ---
 
 ## Xử lý sự cố
 
-| Vấn đề                              | Cách khắc phục                                                      |
-| ----------------------------------- | ------------------------------------------------------------------- |
-| "File not found: vocab.csv"         | File `vocab.csv` chưa nằm cùng thư mục với `deckmaker.exe`. Copy nó vào. |
-| File CSV bị lỗi font / chữ lạ       | Mở file CSV bằng Notepad, chọn **File → Save As → UTF-8**, lưu lại. |
-| Không có âm thanh                   | Máy cần có Internet khi chạy chương trình.                          |
-| Thẻ trắc nghiệm không hiển thị đúng | Chưa cài add-on `1566095810`. Vào Anki cài rồi import lại.         |
-| Windows SmartScreen chặn file .exe  | Nhấn **More info → Run anyway**.                                    |
+| Vấn đề | Cách khắc phục |
+| ------ | -------------- |
+| "CSV file is missing required headers" | Kiểm tra hàng đầu tiên của CSV, phải có đủ: `Từ, Phát âm, Loại từ, Ý nghĩa, Ví dụ, Ghi chú`. |
+| "File not found" | Kiểm tra lại đường dẫn file hoặc kéo thả file CSV trực tiếp vào `deckmaker.exe` / terminal. |
+| File CSV bị lỗi font / chữ lạ | Mở file CSV bằng Notepad hoặc VS Code, chọn **Save As → UTF-8 with BOM**, lưu lại. |
+| Không có âm thanh / lỗi tải audio | Cần kết nối Internet để `gTTS` tải phát âm cho các từ mới. |
+| Thẻ trắc nghiệm không hiển thị đúng | Chưa cài add-on `1566095810`. Vào Anki cài tiện ích rồi khởi động lại trước khi import. |
+| Windows SmartScreen chặn file .exe | Nhấn **More info → Run anyway** (Thông tin thêm → Vẫn chạy). |
 
 ---
 
 ## Cập nhật danh sách từ vựng
 
-Khi bạn thêm từ mới hoặc sửa từ cũ trong Google Sheets, bạn cần làm lại bộ thẻ
-để những thay đổi đó xuất hiện trong Anki. Các bước làm:
+Chương trình gán mã định danh cố định (stable ID) cho từng thẻ, do đó việc import lại là **hoàn toàn an toàn: tiến độ học của các từ cũ được giữ nguyên, chỉ có từ mới được bổ sung vào.**
 
-1. Mở Google Sheets, thêm/sửa từ xong thì vào **File → Download → Comma
-   Separated Values (.csv)** để tải file mới về.
-2. **Đổi tên** file vừa tải thành `vocab.csv`.
-3. Copy file `vocab.csv` mới vào thư mục chứa `deckmaker.exe`, **ghi đè** lên
-   file cũ.
-4. Chạy lại chương trình (nhấp đúp `deckmaker.exe`).
-5. Vào Anki, import lại file `vocab.apkg` mới (giống hệt Bước 4 ở trên).
-   Những từ đã học sẽ được giữ nguyên, chỉ có từ mới được thêm vào.
+1. Mở Google Sheets, thêm hoặc sửa từ vựng rồi tải file `.csv` mới về máy.
+2. Kéo file CSV mới thả vào `deckmaker.exe` (hoặc chạy lại qua dòng lệnh).
+3. Mở Anki, chọn **File → Import** file `.apkg` mới tạo — Anki sẽ tự động sáp nhập thẻ mới vào bộ thẻ hiện có mà không làm mất lịch sử học.
 
-> 💡 Nếu bạn chỉ muốn thêm từ mà không muốn tải lại toàn bộ audio, dùng
-> `--no-audio` như hướng dẫn ở Bước 3. Audio của từ cũ vẫn giữ nguyên, chỉ
-> thiếu phát âm cho từ mới thêm.
+> **Lưu ý chuyển đổi một lần:** Các bản deck tạo *trước* khi có tính năng stable ID sẽ dùng ID ngẫu nhiên và có thể bị nhân đôi trong lần import đầu tiên. Để có bộ thẻ sạch, hãy xóa bộ thẻ "IELTS Vocabulary" cũ trong Anki một lần rồi import lại. Các lần sau sẽ cập nhật lũy tiến bình thường.
 
 ---
 
 ## Ghi chú thêm
 
-- Chương trình dùng **Google Text-to-Speech** để đọc từ — cần có mạng khi tạo audio.
-- Mỗi lần chạy, chỉ tải audio cho **từ mới**, từ đã có thì bỏ qua.
-- File `vocab.apkg` sẽ bị **ghi đè** mỗi lần chạy.
+- Chương trình dùng **Google Text-to-Speech (gTTS)** để đọc từ — cần có mạng khi tạo audio.
+- Mỗi lần chạy, chỉ tải audio cho **từ mới**, từ đã có trong thư mục `audio/` sẽ được tái sử dụng.
+- File `<tên-file>.apkg` sẽ được ghi đè/cập nhật tương ứng mỗi lần chạy với file CSV đó.

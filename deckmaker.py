@@ -21,9 +21,15 @@ from gtts import gTTS
 #  Configuration
 # ═══════════════════════════════════════════════════════════════════
 
-CSV_FILE = "vocab.csv"
-OUTPUT_FILE = "vocab.apkg"
-AUDIO_DIR = "audio"
+# (AI) Default filenames, schema expectations, and audio cache location
+DEFAULT_CSV = "vocab.csv"
+REQUIRED_HEADERS = ["Từ", "Phát âm", "Loại từ", "Ý nghĩa", "Ví dụ", "Ghi chú"]
+APP_DIR = (
+    os.path.dirname(sys.executable)
+    if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__))
+)
+AUDIO_DIR = os.path.join(APP_DIR, "audio")
 
 # genanki requires unique IDs — pick anything, just don't reuse
 MODEL_WORD_ID = 1607392319
@@ -35,29 +41,112 @@ DECK_ID = 3141592653
 # ═══════════════════════════════════════════════════════════════════
 
 
+# (AI) Clean raw paths from drag-and-drop actions, stripping shell quotes and escape characters
+def clean_path(raw_path: str) -> str:
+    path = raw_path.strip().strip("'\"`")
+    if os.name != "nt" and "\\ " in path:
+        path = path.replace("\\ ", " ")
+    return os.path.abspath(os.path.expanduser(path))
+
+
+# (AI) Prevent instant terminal closure on Windows Explorer drag-and-drop or execution errors
+def pause_if_needed() -> None:
+    if "--no-pause" in sys.argv:
+        return
+    if os.name == "nt" and getattr(sys, "frozen", False):
+        try:
+            input("\nPress Enter to exit...")
+        except (KeyboardInterrupt, EOFError):
+            pass
+
+
+# (AI) Determine input CSV path and options from CLI arguments, defaults, or interactive prompts
+def resolve_cli_args() -> tuple[str, bool]:
+    no_audio = "--no-audio" in sys.argv
+    args = [a for a in sys.argv[1:] if a not in ("--no-audio", "--no-pause")]
+
+    target_csv = ""
+    if args:
+        target_csv = clean_path(args[0])
+    elif os.path.exists(DEFAULT_CSV):
+        target_csv = os.path.abspath(DEFAULT_CSV)
+    else:
+        if sys.stdin and sys.stdin.isatty():
+            print("No CSV file specified and 'vocab.csv' not found.")
+            try:
+                prompted = input("Drag and drop your CSV file here (or enter path): ")
+                if prompted.strip():
+                    target_csv = clean_path(prompted)
+            except (KeyboardInterrupt, EOFError):
+                print("\nCancelled.")
+                sys.exit(0)
+
+    if not target_csv:
+        print("Error: No CSV file provided.")
+        print("Usage: python deckmaker.py <path_to_vocab.csv> [--no-audio]")
+        sys.exit(1)
+
+    if not os.path.exists(target_csv):
+        print(f"Error: File not found: {target_csv}")
+        sys.exit(1)
+
+    if not target_csv.lower().endswith(".csv"):
+        print(f"Warning: File does not have a .csv extension: {target_csv}")
+
+    return target_csv, no_audio
+
+
+# (AI) Derive output .apkg path alongside the input CSV file
+def get_output_path(csv_path: str) -> str:
+    base_dir = os.path.dirname(csv_path)
+    stem = os.path.splitext(os.path.basename(csv_path))[0]
+    output_name = f"{stem}.apkg"
+    target = os.path.join(base_dir, output_name)
+    try:
+        if os.access(base_dir, os.W_OK):
+            return target
+    except Exception:
+        pass
+    return os.path.abspath(output_name)
+
+
 def sanitize_filename(name: str) -> str:
     """Turn a word into a safe mp3 filename."""
     safe = re.sub(r"[^a-zA-Z0-9_-]", "_", name).strip("_").lower()
     return f"{safe}.mp3" if safe else "unknown.mp3"
 
 
+# (AI) Validate CSV headers against expected schema and extract vocabulary entries
 def parse_csv(filepath: str) -> list[dict]:
-    """Read the vocabulary CSV, return a list of word dicts."""
     words: list[dict] = []
     with open(filepath, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
+        if not reader.fieldnames:
+            print(f"Error: CSV file is empty or missing headers: {filepath}")
+            sys.exit(1)
+
+        normalized_headers = [h.strip() for h in reader.fieldnames if h]
+        missing_headers = [h for h in REQUIRED_HEADERS if h not in normalized_headers]
+        if missing_headers:
+            print(f"Error: CSV file is missing required headers: {filepath}")
+            print(f"  Missing : {', '.join(missing_headers)}")
+            print(f"  Expected: {', '.join(REQUIRED_HEADERS)}")
+            print(f"  Found   : {', '.join(normalized_headers)}")
+            sys.exit(1)
+
         for row in reader:
-            word = row.get("Từ", "").strip()
+            row_clean = {k.strip(): v for k, v in row.items() if k}
+            word = row_clean.get("Từ", "").strip()
             if not word:
                 continue
             words.append(
                 {
                     "word": word,
-                    "pronunciation": row.get("Phát âm", "").strip(),
-                    "word_type": row.get("Loại từ", "").strip(),
-                    "meaning": row.get("Ý nghĩa", "").strip(),
-                    "example": row.get("Ví dụ", "").strip(),
-                    "notes": row.get("Ghi chú", "").strip(),
+                    "pronunciation": row_clean.get("Phát âm", "").strip(),
+                    "word_type": row_clean.get("Loại từ", "").strip(),
+                    "meaning": row_clean.get("Ý nghĩa", "").strip(),
+                    "example": row_clean.get("Ví dụ", "").strip(),
+                    "notes": row_clean.get("Ghi chú", "").strip(),
                 }
             )
     return words
@@ -463,16 +552,18 @@ MCQ_MODEL = genanki.Model(
 # ═══════════════════════════════════════════════════════════════════
 
 
+# (AI) Main entrypoint: resolve arguments, parse vocab, generate audio, and compile Anki deck
 def main() -> None:
-    no_audio = "--no-audio" in sys.argv
+    csv_file, no_audio = resolve_cli_args()
+    output_file = get_output_path(csv_file)
 
     print("=" * 60)
     print("  Deckmaker — IELTS Vocabulary Anki Deck Generator")
     print("=" * 60)
 
     # ── 1. Parse CSV ──────────────────────────────────────────────
-    print(f"\n[1/4] Parsing CSV: {CSV_FILE}")
-    words = parse_csv(CSV_FILE)
+    print(f"\n[1/4] Parsing CSV: {csv_file}")
+    words = parse_csv(csv_file)
     print(f"  Found {len(words)} vocabulary entries.")
     if not words:
         print("  No words found. Exiting.")
@@ -578,7 +669,7 @@ def main() -> None:
     )
 
     # ── 4. Write package ──────────────────────────────────────────
-    print(f"\n[4/4] Writing {OUTPUT_FILE} …")
+    print(f"\n[4/4] Writing {output_file} …")
     existing_media = [f for f in media_files if os.path.exists(f)]
     if len(existing_media) < len(media_files):
         print(
@@ -586,15 +677,27 @@ def main() -> None:
             " — [sound:…] links will be silent."
         )
     pkg = genanki.Package(deck, media_files=existing_media)
-    pkg.write_to_file(OUTPUT_FILE)
+    pkg.write_to_file(output_file)
 
-    size_mb = os.path.getsize(OUTPUT_FILE) / (1024 * 1024)
+    size_mb = os.path.getsize(output_file) / (1024 * 1024)
     print(f"\n{'=' * 60}")
-    print(f"  ✅  {OUTPUT_FILE}  ({size_mb:.1f} MB)")
+    print(f"  ✅  {output_file}  ({size_mb:.1f} MB)")
     print(f"  {word_notes} word cards  +  {mcq_notes} MCQ cards")
     print(f"  Import into Anki →  File → Import")
     print(f"{'=' * 60}")
+    if getattr(sys, "frozen", False):
+        pause_if_needed()
 
 
+# (AI) Safe top-level runner catching errors and pausing on Windows/interactive runs
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code != 0:
+            pause_if_needed()
+        sys.exit(e.code)
+    except Exception as e:
+        print(f"\nUnexpected error: {e}")
+        pause_if_needed()
+        sys.exit(1)
