@@ -3,6 +3,12 @@ import sys
 import tempfile
 import unittest
 
+# (AI) Ensure stdout and stderr handle UTF-8 cleanly across Windows test runners
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # (AI) Add root repository path to module lookup
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import deckmaker
