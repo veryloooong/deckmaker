@@ -1,9 +1,9 @@
 # AGENTS.md
 
-> **Notice:** Sections *Run* and *Gotchas* have been updated by AI to reflect custom CSV input paths, drag-and-drop support, and header validation.
+> **Notice:** Sections *Run*, *Gotchas*, and *CI/CD* have been updated by AI to reflect custom CSV input paths, test suites, and the automated Windows PyInstaller pipeline.
 
 Single-file Python script (`deckmaker.py`) that turns a CSV of IELTS vocab into an
-Anki `.apkg` (via `genanki`) with TTS audio (via `gTTS`). No tests, no linter, no CI.
+Anki `.apkg` (via `genanki`) with TTS audio (via `gTTS`). Unit tests in `tests/test_deckmaker.py`.
 Deps in `requirements.txt`: `genanki>=0.13.0`, `gtts>=2.5.0`, `pyinstaller>=6.0.0`.
 
 ## Run
@@ -40,6 +40,6 @@ uv run python deckmaker.py path/to/words.csv --no-audio  # skip TTS, use existin
   first re-import after the fix adds one duplicate MCQ set. Delete the old deck in Anki
   and re-import once to get a clean, stable deck; future re-imports are incremental.
 - Rewrite of the shipped `dist/deckmaker.exe`: `uv pip install pyinstaller && pyinstaller --onefile --console --name deckmaker --collect-all gtts deckmaker.py`.
-  This is now automated: `.github/workflows/build-exe.yml` builds `dist/deckmaker.exe`
-  on Windows on every push to `main` (artifact `deckmaker-windows`) and attaches it
-  to a GitHub Release when a tag `v*` is pushed. Add-ons/tagging assumed; CI needs no secrets.
+  This is automated in `.github/workflows/build-exe.yml`: runs unit tests, compiles `dist/deckmaker.exe`
+  on Windows (`windows-latest`), runs a smoke test against `tests/sample.csv`, uploads artifact `deckmaker-windows`,
+  and attaches the binary to a GitHub Release on `v*` tags with write permissions.
