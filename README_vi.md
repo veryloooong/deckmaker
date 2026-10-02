@@ -2,7 +2,7 @@
 
 [🇬🇧 English](README.md)
 
-> **Lưu ý:** Tài liệu này đã được AI cập nhật bổ sung liên kết chuyển đổi ngôn ngữ, hướng dẫn tính năng kéo-thả (drag-and-drop) file CSV bất kỳ, và đồng bộ nội dung với bản tiếng Anh.
+> **Lưu ý:** Tài liệu này đã được AI cập nhật bổ sung liên kết tải phiên bản mới nhất, liên kết chuyển đổi ngôn ngữ, hướng dẫn tính năng kéo-thả (drag-and-drop) file CSV bất kỳ, và đồng bộ nội dung với bản tiếng Anh.
 
 ## Chương trình này làm gì?
 
@@ -13,6 +13,8 @@ biến danh sách đó thành **bộ thẻ Anki** để bạn ôn tập, bao g�
    hiện nghĩa tiếng Việt và câu ví dụ.
 2. **Thẻ trắc nghiệm** — câu ví dụ khuyết từ, bạn chọn đáp án đúng trong 4 lựa
    chọn. Mặt sau tô xanh/đỏ và cho biết bạn chọn đúng hay sai.
+
+> 📥 **Tải về chương trình cho Windows:** [**deckmaker.exe (Bản mới nhất)**](https://github.com/veryloooong/deckmaker/releases/latest/download/deckmaker.exe) — tải về là dùng được ngay, không cần cài đặt Python. Xem [tất cả các phiên bản](https://github.com/veryloooong/deckmaker/releases/latest).
 
 Tất cả chỉ cần **3 bước** bên dưới.
 

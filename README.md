@@ -2,7 +2,7 @@
 
 [🇻🇳 Tiếng Việt](README_vi.md)
 
-> **Notice:** This document has been updated by AI to include cross-language navigation, drag-and-drop / custom CSV support, and content parity with the Vietnamese guide.
+> **Notice:** This document has been updated by AI to include release download links, cross-language navigation, drag-and-drop / custom CSV support, and content parity with the Vietnamese guide.
 
 Generate an IELTS vocabulary Anki deck programmatically from a CSV file.
 
@@ -23,7 +23,9 @@ uv pip install -r requirements.txt
 
 ## Standalone Executable (no Python needed)
 
-A pre-built `dist/deckmaker.exe` is included. You can:
+Download the pre-built Windows binary: [**deckmaker.exe (Latest Release)**](https://github.com/veryloooong/deckmaker/releases/latest/download/deckmaker.exe) (or browse [all releases](https://github.com/veryloooong/deckmaker/releases/latest)).
+
+You can:
 - **Drag and drop** any vocabulary `.csv` file directly onto `deckmaker.exe` in Windows Explorer.
 - Run from terminal with an optional custom CSV path:
 
