@@ -15,6 +15,17 @@ Install the required Anki addon (needed for the MCQ card type):
 3. Enter the code: **`1566095810`**
 4. Restart Anki
 
+Optional — to let deckmaker push the deck straight into Anki (the `--anki` flag),
+install **AnkiConnect** as well:
+
+1. **Tools → Add-ons → Get Add-ons…**
+2. Enter the code: **`2055492159`**
+3. Restart Anki
+
+AnkiConnect only listens while Anki is running, on `http://127.0.0.1:8765`.
+The `.apkg` is always written to disk, so if Anki is closed you can still import
+it by hand.
+
 ## Setup
 
 ```bash
@@ -26,17 +37,19 @@ uv pip install -r requirements.txt
 Download the pre-built Windows binary: [**deckmaker.exe (Latest Release)**](https://github.com/veryloooong/deckmaker/releases/latest/download/deckmaker.exe) (or browse [all releases](https://github.com/veryloooong/deckmaker/releases/latest)).
 
 You can:
+
 - **Drag and drop** any vocabulary `.csv` file directly onto `deckmaker.exe` in Windows Explorer.
 - Run from terminal with an optional custom CSV path:
 
 ```powershell
 .\dist\deckmaker.exe [path\to\vocab.csv]
 .\dist\deckmaker.exe [path\to\vocab.csv] --no-audio   # skip TTS if audio files already present
+.\dist\deckmaker.exe [path\to\vocab.csv] --anki       # import straight into a running Anki
 ```
 
 The CSV must include these 6 columns (first row as headers):
 
-| Từ | Phát âm | Loại từ | Ý nghĩa | Ví dụ | Ghi chú |
+| Từ  | Phát âm | Loại từ | Ý nghĩa | Ví dụ | Ghi chú |
 | --- | ------- | ------- | ------- | ----- | ------- |
 
 Outputs `<filename>.apkg` in the same folder as the input CSV.
@@ -59,12 +72,16 @@ python deckmaker.py path/to/my_words.csv
 
 # Skip audio generation
 python deckmaker.py path/to/my_words.csv --no-audio
+
+# Push the deck straight into a running Anki (AnkiConnect addon required)
+python deckmaker.py path/to/my_words.csv --no-audio --anki
 ```
 
 If no arguments are provided and `vocab.csv` is not in the directory, the program interactively prompts you to drag and drop or enter the CSV path.
 
 This reads the CSV and produces `<filename>.apkg` —
-import it into Anki via **File → Import**.
+import it into Anki via **File → Import**, or add `--anki` to have deckmaker
+import it for you through AnkiConnect.
 
 ## Updating an existing deck (adding words)
 
@@ -75,12 +92,17 @@ their progress; only genuinely new words are added.** Workflow:
 2. Re-run deckmaker (drag onto `deckmaker.exe` or run CLI).
 3. Re-import `<filename>.apkg` (File → Import) — Anki merges into the existing deck.
 
-> **One-time migration note:** decks built *before* the stable-ID fix carry
+> **One-time migration note:** decks built _before_ the stable-ID fix carry
 > random IDs and will duplicate once on the first re-import. To get a clean deck,
 > delete the old "IELTS Vocabulary" deck in Anki and re-import once. After that,
 > all re-imports are incremental.
 
-Editing a word's text changes its ID, so the old card remains and a new one is added. Revert the edit (or delete the old card in Anki) to keep things tidy.
+Editing a word's text no longer changes its ID: the existing card is updated in
+place and keeps its study progress. Only genuinely new words add cards.
+
+> **One-time migration note (word cards):** decks built _before_ word cards used a
+> content-derived ID may show one duplicate per edited word after upgrading. Delete
+> those duplicates once in Anki; later re-imports are incremental.
 
 ## Card Types
 
@@ -101,19 +123,22 @@ addon (`1566095810`).
 | File               | Purpose                                                   |
 | ------------------ | --------------------------------------------------------- |
 | `deckmaker.py`     | Main script — parses CSV, generates audio, builds `.apkg` |
-| `requirements.txt` | Python dependencies (`genanki`, `gtts`, `pyinstaller`)     |
+| `requirements.txt` | Python dependencies (`genanki`, `gtts`, `pyinstaller`)    |
 | `*.csv`            | Input vocabulary CSV                                      |
 | `*.apkg`           | Output Anki deck                                          |
 | `audio/`           | Generated TTS mp3 files                                   |
 
 ## Troubleshooting
 
-| Issue | Resolution |
-| ----- | ---------- |
-| "CSV file is missing required headers" | Ensure row 1 has: `Từ, Phát âm, Loại từ, Ý nghĩa, Ví dụ, Ghi chú`. |
-| "File not found" | Check the file path or drag and drop the CSV into the terminal / onto `deckmaker.exe`. |
-| CSV text encoding looks garbled | Open CSV in an editor (like Notepad or VS Code) and save as **UTF-8** with BOM. |
-| Missing audio | An internet connection is required for `gTTS` to generate new pronunciation files. |
-| MCQ cards not rendering properly | Install Anki addon `1566095810` and restart Anki before importing. |
-| Windows SmartScreen popup | Click **More info → Run anyway**. |
-
+| Issue                                             | Resolution                                                                                                                       |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| "CSV file is missing required headers"            | Ensure row 1 has: `Từ, Phát âm, Loại từ, Ý nghĩa, Ví dụ, Ghi chú`.                                                               |
+| "File not found"                                  | Check the file path or drag and drop the CSV into the terminal / onto `deckmaker.exe`.                                           |
+| CSV text encoding looks garbled                   | Open CSV in an editor (like Notepad or VS Code) and save as **UTF-8** with BOM.                                                  |
+| Missing audio                                     | An internet connection is required for `gTTS` to generate new pronunciation files.                                               |
+| MCQ cards not rendering properly                  | Install Anki addon `1566095810` and restart Anki before importing.                                                               |
+| `--anki` says "Could not import into Anki"        | Start Anki and confirm AnkiConnect (`2055492159`) is installed. The `.apkg` is still written, so **File → Import** always works. |
+| `--anki` fails on a non-default port or host      | Set the `ANKI_CONNECT_URL` environment variable, e.g. `http://127.0.0.1:8766`.                                                   |
+| AnkiConnect times out on macOS                    | Disable App Nap for Anki (see the AnkiConnect docs); wake Anki and retry.                                                        |
+| AnkiConnect unreachable / Windows firewall prompt | Allow Anki through the firewall — AnkiConnect runs a local HTTP server on port 8765.                                             |
+| Windows SmartScreen popup                         | Click **More info → Run anyway**.                                                                                                |

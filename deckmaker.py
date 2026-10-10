@@ -7,11 +7,14 @@ Produces two card types:
 """
 
 import csv
+import json
 import os
 import random
 import re
+import shutil
 import sys
 import time
+import urllib.request
 
 import genanki
 from genanki.util import guid_for
@@ -42,6 +45,13 @@ MODEL_WORD_ID = 1607392319
 MODEL_MCQ_ID = 2059400110
 DECK_ID = 3141592653
 
+# AnkiConnect (Anki add-on 2055492159) exposes a local HTTP API while Anki runs.
+# The URL is overridable so a non-default port or a remote host still works.
+ANKI_CONNECT_URL = os.environ.get("ANKI_CONNECT_URL", "http://127.0.0.1:8765")
+ANKI_API_VERSION = 6
+# Importing a deck that carries audio can take a while, so allow generous time.
+ANKI_TIMEOUT_SECONDS = 120
+
 # ═══════════════════════════════════════════════════════════════════
 #  Helpers
 # ═══════════════════════════════════════════════════════════════════
@@ -67,9 +77,11 @@ def pause_if_needed() -> None:
 
 
 # (AI) Determine input CSV path and options from CLI arguments, defaults, or interactive prompts
-def resolve_cli_args() -> tuple[str, bool]:
+def resolve_cli_args() -> tuple[str, bool, bool]:
     no_audio = "--no-audio" in sys.argv
-    args = [a for a in sys.argv[1:] if a not in ("--no-audio", "--no-pause")]
+    push_anki = "--anki" in sys.argv
+    # Every known flag must be listed here, otherwise it is mistaken for the CSV path.
+    args = [a for a in sys.argv[1:] if a not in ("--no-audio", "--no-pause", "--anki")]
 
     target_csv = ""
     if args:
@@ -89,7 +101,7 @@ def resolve_cli_args() -> tuple[str, bool]:
 
     if not target_csv:
         print("Error: No CSV file provided.")
-        print("Usage: python deckmaker.py <path_to_vocab.csv> [--no-audio]")
+        print("Usage: python deckmaker.py <path_to_vocab.csv> [--no-audio] [--anki]")
         sys.exit(1)
 
     if not os.path.exists(target_csv):
@@ -99,7 +111,7 @@ def resolve_cli_args() -> tuple[str, bool]:
     if not target_csv.lower().endswith(".csv"):
         print(f"Warning: File does not have a .csv extension: {target_csv}")
 
-    return target_csv, no_audio
+    return target_csv, no_audio, push_anki
 
 
 # (AI) Derive output .apkg path alongside the input CSV file
@@ -554,13 +566,112 @@ MCQ_MODEL = genanki.Model(
 )
 
 # ═══════════════════════════════════════════════════════════════════
+#  Note builders
+# ═══════════════════════════════════════════════════════════════════
+
+
+# (AI) Build the Word→Meaning note with a GUID that survives field edits
+def build_word_note(w: dict, audio_ref: str) -> genanki.Note:
+    # Anki dedupes on GUID: with genanki's content-derived default, editing any
+    # field (meaning, pronunciation, notes, …) changes the GUID and re-import
+    # would add a duplicate card while orphaning study progress. Keying the GUID
+    # on the word alone makes re-imports update the existing note in place.
+    return genanki.Note(
+        model=WORD_MODEL,
+        guid=guid_for("word", w["word"]),
+        fields=[
+            w["word"],
+            w["pronunciation"],
+            w["word_type"],
+            w["meaning"],
+            w["example"],
+            w["notes"],
+            audio_ref,
+        ],
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  AnkiConnect
+# ═══════════════════════════════════════════════════════════════════
+
+
+# (AI) Send a single AnkiConnect action over its local HTTP API and unwrap the result
+def anki_invoke(
+    action: str, params: dict | None = None, url: str = ANKI_CONNECT_URL
+) -> object:
+    payload = json.dumps(
+        {
+            "action": action,
+            "version": ANKI_API_VERSION,
+            "params": params or {},
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(url, payload, {"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=ANKI_TIMEOUT_SECONDS) as response:
+        body = json.loads(response.read().decode("utf-8"))
+
+    if not isinstance(body, dict) or "error" not in body or "result" not in body:
+        raise RuntimeError("AnkiConnect returned an unexpected response")
+    if body["error"] is not None:
+        raise RuntimeError(str(body["error"]))
+    return body["result"]
+
+
+# (AI) Import the generated .apkg into the running Anki instance
+def anki_import_package(apkg_path: str, url: str = ANKI_CONNECT_URL) -> None:
+    # Fails fast (and with a clearer error) when Anki is closed or AnkiConnect
+    # is not installed, instead of surfacing a bare connection error.
+    anki_invoke("version", url=url)
+
+    try:
+        anki_invoke("importPackage", {"path": apkg_path}, url=url)
+        return
+    except Exception as first_error:
+        # AnkiConnect documents importPackage's path as relative to Anki's
+        # collection.media folder, so an absolute path is not guaranteed to
+        # work. Retry once by staging a copy in the media folder and importing
+        # it by bare filename.
+        try:
+            media_dir = anki_invoke("getMediaDirPath", url=url)
+        except Exception:
+            raise first_error
+        if not isinstance(media_dir, str) or not media_dir:
+            raise first_error
+
+        staged_path = os.path.join(media_dir, os.path.basename(apkg_path))
+        shutil.copy2(apkg_path, staged_path)
+        try:
+            anki_invoke("importPackage", {"path": os.path.basename(apkg_path)}, url=url)
+        finally:
+            try:
+                os.remove(staged_path)
+            except OSError:
+                pass
+
+
+# (AI) Best-effort push to Anki: never fails the run, always reports the manual fallback
+def push_to_anki(apkg_path: str, url: str = ANKI_CONNECT_URL) -> bool:
+    print(f"\n[Anki] Pushing deck via AnkiConnect ({url}) …")
+    try:
+        anki_import_package(apkg_path, url=url)
+    except Exception as error:
+        print(f"  Could not import into Anki: {error}")
+        print("  Anki must be running with the AnkiConnect add-on (2055492159).")
+        print(f"  Manual import still works: File → Import  →  {apkg_path}")
+        return False
+    print('  Anki merged it into "IELTS Vocabulary".')
+    return True
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  Main
 # ═══════════════════════════════════════════════════════════════════
 
 
 # (AI) Main entrypoint: resolve arguments, parse vocab, generate audio, and compile Anki deck
 def main() -> None:
-    csv_file, no_audio = resolve_cli_args()
+    csv_file, no_audio, push_anki = resolve_cli_args()
     output_file = get_output_path(csv_file)
 
     print("=" * 60)
@@ -614,20 +725,7 @@ def main() -> None:
         audio_ref = f"[sound:{audio_filename}]"
 
         # --- Word Card ---
-        deck.add_note(
-            genanki.Note(
-                model=WORD_MODEL,
-                fields=[
-                    w["word"],
-                    w["pronunciation"],
-                    w["word_type"],
-                    w["meaning"],
-                    w["example"],
-                    w["notes"],
-                    audio_ref,
-                ],
-            )
-        )
+        deck.add_note(build_word_note(w, audio_ref))
         word_notes += 1
 
         # --- MCQ Cloze Card ---
@@ -685,11 +783,19 @@ def main() -> None:
     pkg = genanki.Package(deck, media_files=existing_media)
     pkg.write_to_file(output_file)
 
+    # ── 5. Optional push into Anki ────────────────────────────────
+    # Warning-only on failure: the .apkg is already written, so a missing or
+    # unreachable Anki must not turn a successful build into a failed run.
+    imported = push_to_anki(output_file) if push_anki else False
+
     size_mb = os.path.getsize(output_file) / (1024 * 1024)
     print(f"\n{'=' * 60}")
     print(f"  ✅  {output_file}  ({size_mb:.1f} MB)")
     print(f"  {word_notes} word cards  +  {mcq_notes} MCQ cards")
-    print(f"  Import into Anki →  File → Import")
+    if imported:
+        print("  Sent to Anki — open Anki to start studying")
+    else:
+        print("  Import into Anki →  File → Import")
     print(f"{'=' * 60}")
     if getattr(sys, "frozen", False):
         pause_if_needed()

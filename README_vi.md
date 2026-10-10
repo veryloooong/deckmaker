@@ -60,7 +60,6 @@ File `.apkg` kết quả sẽ được tạo ra ngay tại thư mục chứa fil
 1. Nếu bạn để file có tên `vocab.csv` cùng thư mục với `deckmaker.exe`: chỉ cần **nhấp đúp** vào `deckmaker.exe`.
 2. Nếu không tìm thấy file `vocab.csv`, chương trình sẽ hỏi bạn: bạn chỉ cần **kéo file CSV thả vào cửa sổ màn hình đen** rồi nhấn Enter.
 
-
 > ℹ️ Lần đầu chạy, Windows có thể hiện cảnh báo "Windows protected your PC".
 > Nhấn **More info** (Thông tin thêm) rồi **Run anyway** (Vẫn chạy).
 
@@ -77,12 +76,15 @@ python deckmaker.py duong/dan/tu_vung.csv
 
 # Bỏ qua tạo file phát âm (nếu file audio đã có sẵn)
 python deckmaker.py duong/dan/tu_vung.csv --no-audio
+
+# Tự động đẩy bộ thẻ vào Anki đang mở (cần add-on AnkiConnect)
+python deckmaker.py duong/dan/tu_vung.csv --no-audio --anki
 ```
 
 Với file `.exe` trên Windows:
 
 ```powershell
-.\dist\deckmaker.exe [duong\dan\tu_vung.csv] [--no-audio]
+.\dist\deckmaker.exe [duong\dan\tu_vung.csv] [--no-audio] [--anki]
 ```
 
 ---
@@ -102,9 +104,40 @@ cài add-on này trong Anki **trước khi import**:
 
 ---
 
+## Tùy chọn: Tự động import vào Anki (cờ `--anki`)
+
+Mặc định chương trình chỉ tạo file `.apkg` và bạn tự import. Nếu muốn chương
+trình **tự đẩy bộ thẻ vào Anki**, hãy cài thêm add-on **AnkiConnect**:
+
+1. Mở Anki, vào **Tools → Add-ons → Get Add-ons…**.
+2. Nhập mã: **`2055492159`**
+3. Khởi động lại Anki.
+
+Sau đó thêm cờ `--anki` khi chạy:
+
+```bash
+python deckmaker.py duong/dan/tu_vung.csv --anki
+```
+
+Lưu ý:
+
+- **Anki phải đang mở** thì AnkiConnect mới hoạt động (nó lắng nghe ở địa chỉ
+  `http://127.0.0.1:8765`).
+- Nếu Anki chưa mở, chương trình chỉ **cảnh báo rồi tiếp tục** — file `.apkg`
+  vẫn được tạo và bạn import thủ công bằng **File → Import** như bình thường.
+- Muốn đổi địa chỉ/port, đặt biến môi trường `ANKI_CONNECT_URL`
+  (ví dụ `http://127.0.0.1:8766`).
+- Trên Windows, lần đầu mở Anki có thể hiện hộp thoại tường lửa — hãy **cho
+  phép (Allow)** để AnkiConnect hoạt động.
+
+---
+
 ## Bước 4: Import vào Anki
 
 Sau khi chạy xong, trong thư mục chứa file CSV sẽ có file **`<tên-file>.apkg`** (ví dụ: `vocab.apkg`). Đây chính là bộ thẻ của bạn.
+
+> 💡 Nếu bạn chạy kèm cờ `--anki` và Anki đang mở, bộ thẻ đã được import sẵn —
+> bạn có thể bỏ qua các bước dưới đây.
 
 1. Mở **Anki**.
 2. Vào menu **File → Import…** (Tệp → Nhập…).
@@ -136,23 +169,26 @@ Sau khi import xong, đây là cách bạn bắt đầu ôn tập:
 
 ## Kết quả sau khi chạy
 
-| File / Thư mục      | Là gì?                                                            |
-| ------------------- | ----------------------------------------------------------------- |
-| `<tên-file>.apkg`   | Bộ thẻ Anki kết quả — **file bạn cần import vào Anki**            |
-| `audio/`            | Thư mục lưu trữ các file phát âm mp3 (dùng chung giữa các lần)   |
+| File / Thư mục    | Là gì?                                                         |
+| ----------------- | -------------------------------------------------------------- |
+| `<tên-file>.apkg` | Bộ thẻ Anki kết quả — **file bạn cần import vào Anki**         |
+| `audio/`          | Thư mục lưu trữ các file phát âm mp3 (dùng chung giữa các lần) |
 
 ---
 
 ## Xử lý sự cố
 
-| Vấn đề | Cách khắc phục |
-| ------ | -------------- |
-| "CSV file is missing required headers" | Kiểm tra hàng đầu tiên của CSV, phải có đủ: `Từ, Phát âm, Loại từ, Ý nghĩa, Ví dụ, Ghi chú`. |
-| "File not found" | Kiểm tra lại đường dẫn file hoặc kéo thả file CSV trực tiếp vào `deckmaker.exe` / terminal. |
-| File CSV bị lỗi font / chữ lạ | Mở file CSV bằng Notepad hoặc VS Code, chọn **Save As → UTF-8 with BOM**, lưu lại. |
-| Không có âm thanh / lỗi tải audio | Cần kết nối Internet để `gTTS` tải phát âm cho các từ mới. |
-| Thẻ trắc nghiệm không hiển thị đúng | Chưa cài add-on `1566095810`. Vào Anki cài tiện ích rồi khởi động lại trước khi import. |
-| Windows SmartScreen chặn file .exe | Nhấn **More info → Run anyway** (Thông tin thêm → Vẫn chạy). |
+| Vấn đề                                    | Cách khắc phục                                                                                                                                |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| "CSV file is missing required headers"    | Kiểm tra hàng đầu tiên của CSV, phải có đủ: `Từ, Phát âm, Loại từ, Ý nghĩa, Ví dụ, Ghi chú`.                                                  |
+| "File not found"                          | Kiểm tra lại đường dẫn file hoặc kéo thả file CSV trực tiếp vào `deckmaker.exe` / terminal.                                                   |
+| File CSV bị lỗi font / chữ lạ             | Mở file CSV bằng Notepad hoặc VS Code, chọn **Save As → UTF-8 with BOM**, lưu lại.                                                            |
+| Không có âm thanh / lỗi tải audio         | Cần kết nối Internet để `gTTS` tải phát âm cho các từ mới.                                                                                    |
+| Thẻ trắc nghiệm không hiển thị đúng       | Chưa cài add-on `1566095810`. Vào Anki cài tiện ích rồi khởi động lại trước khi import.                                                       |
+| `--anki` báo "Could not import into Anki" | Anki chưa mở hoặc chưa cài AnkiConnect (`2055492159`). File `.apkg` vẫn được tạo, nên bạn luôn có thể import thủ công bằng **File → Import**. |
+| `--anki` không kết nối được (đổi port)    | Đặt biến môi trường `ANKI_CONNECT_URL`, ví dụ `http://127.0.0.1:8766`.                                                                        |
+| AnkiConnect bị treo / timeout trên macOS  | Tắt tính năng App Nap cho Anki (xem tài liệu AnkiConnect), sau đó mở Anki lên và chạy lại.                                                    |
+| Windows SmartScreen chặn file .exe        | Nhấn **More info → Run anyway** (Thông tin thêm → Vẫn chạy).                                                                                  |
 
 ---
 
@@ -161,10 +197,14 @@ Sau khi import xong, đây là cách bạn bắt đầu ôn tập:
 Chương trình gán mã định danh cố định (stable ID) cho từng thẻ, do đó việc import lại là **hoàn toàn an toàn: tiến độ học của các từ cũ được giữ nguyên, chỉ có từ mới được bổ sung vào.**
 
 1. Mở Google Sheets, thêm hoặc sửa từ vựng rồi tải file `.csv` mới về máy.
-2. Kéo file CSV mới thả vào `deckmaker.exe` (hoặc chạy lại qua dòng lệnh).
+2. Kéo file CSV mới thả vào `deckmaker.exe` (hoặc chạy lại qua dòng lệnh). Thêm cờ `--anki` nếu muốn đẩy thẳng vào Anki đang mở.
 3. Mở Anki, chọn **File → Import** file `.apkg` mới tạo — Anki sẽ tự động sáp nhập thẻ mới vào bộ thẻ hiện có mà không làm mất lịch sử học.
 
-> **Lưu ý chuyển đổi một lần:** Các bản deck tạo *trước* khi có tính năng stable ID sẽ dùng ID ngẫu nhiên và có thể bị nhân đôi trong lần import đầu tiên. Để có bộ thẻ sạch, hãy xóa bộ thẻ "IELTS Vocabulary" cũ trong Anki một lần rồi import lại. Các lần sau sẽ cập nhật lũy tiến bình thường.
+Sửa nội dung của một từ cũng không làm mất tiến độ: thẻ cũ được **cập nhật tại chỗ** thay vì tạo thẻ trùng.
+
+> **Lưu ý chuyển đổi một lần:** Các bản deck tạo _trước_ khi có tính năng stable ID sẽ dùng ID ngẫu nhiên và có thể bị nhân đôi trong lần import đầu tiên. Để có bộ thẻ sạch, hãy xóa bộ thẻ "IELTS Vocabulary" cũ trong Anki một lần rồi import lại. Các lần sau sẽ cập nhật lũy tiến bình thường.
+
+> **Lưu ý chuyển đổi một lần (thẻ từ vựng):** Trước đây mã định danh của thẻ từ vựng được tính từ _nội dung_, nên sửa một trường sẽ tạo thẻ trùng. Bản mới đã sửa lỗi này. Nếu bạn thấy vài thẻ bị nhân đôi sau khi nâng cấp, chỉ cần xóa chúng một lần trong Anki; các lần import sau là lũy tiến.
 
 ---
 
