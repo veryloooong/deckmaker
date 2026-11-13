@@ -202,9 +202,7 @@ Chương trình gán mã định danh cố định (stable ID) cho từng thẻ,
 
 Sửa nội dung của một từ cũng không làm mất tiến độ: thẻ cũ được **cập nhật tại chỗ** thay vì tạo thẻ trùng.
 
-> **Lưu ý chuyển đổi một lần:** Các bản deck tạo _trước_ khi có tính năng stable ID sẽ dùng ID ngẫu nhiên và có thể bị nhân đôi trong lần import đầu tiên. Để có bộ thẻ sạch, hãy xóa bộ thẻ "IELTS Vocabulary" cũ trong Anki một lần rồi import lại. Các lần sau sẽ cập nhật lũy tiến bình thường.
-
-> **Lưu ý chuyển đổi một lần (thẻ từ vựng):** Trước đây mã định danh của thẻ từ vựng được tính từ _nội dung_, nên sửa một trường sẽ tạo thẻ trùng. Bản mới đã sửa lỗi này. Nếu bạn thấy vài thẻ bị nhân đôi sau khi nâng cấp, chỉ cần xóa chúng một lần trong Anki; các lần import sau là lũy tiến.
+> **Lưu ý chuyển đổi một lần:** Các bản deck tạo _trước_ khi có tính năng stable ID sẽ bị nhân đôi trong lần import đầu tiên. Để **giữ nguyên toàn bộ tiến độ học**, hãy đóng Anki và chạy `python deckmaker.py --migrate` (hoặc `.\dist\deckmaker.exe --migrate`) một lần — chương trình sẽ sao lưu `collection.anki2.bak`, cập nhật mã định danh tại chỗ và xóa các thẻ trùng chưa học. Hoặc nếu muốn làm mới từ đầu, xóa bộ thẻ "IELTS Vocabulary" cũ trong Anki rồi import lại một lần.
 
 ---
 

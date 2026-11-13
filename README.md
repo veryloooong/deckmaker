@@ -75,6 +75,9 @@ python deckmaker.py path/to/my_words.csv --no-audio
 
 # Push the deck straight into a running Anki (AnkiConnect addon required)
 python deckmaker.py path/to/my_words.csv --no-audio --anki
+
+# One-time migration for pre-patch decks (close Anki first; keeps study progress)
+python deckmaker.py --migrate
 ```
 
 If no arguments are provided and `vocab.csv` is not in the directory, the program interactively prompts you to drag and drop or enter the CSV path.
@@ -92,17 +95,13 @@ their progress; only genuinely new words are added.** Workflow:
 2. Re-run deckmaker (drag onto `deckmaker.exe` or run CLI).
 3. Re-import `<filename>.apkg` (File → Import) — Anki merges into the existing deck.
 
-> **One-time migration note:** decks built _before_ the stable-ID fix carry
-> random IDs and will duplicate once on the first re-import. To get a clean deck,
-> delete the old "IELTS Vocabulary" deck in Anki and re-import once. After that,
-> all re-imports are incremental.
-
-Editing a word's text no longer changes its ID: the existing card is updated in
-place and keeps its study progress. Only genuinely new words add cards.
-
-> **One-time migration note (word cards):** decks built _before_ word cards used a
-> content-derived ID may show one duplicate per edited word after upgrading. Delete
-> those duplicates once in Anki; later re-imports are incremental.
+> **One-time migration note:** decks built _before_ the stable-ID fixes carry
+> old content-derived IDs and will duplicate once on re-import. To keep all study
+> progress, close Anki and run `python deckmaker.py --migrate` (or
+> `.\dist\deckmaker.exe --migrate`) once — it backs up `collection.anki2` to
+> `collection.anki2.bak`, updates existing card IDs in place, and removes
+> unstudied duplicates. Alternatively, delete the old "IELTS Vocabulary" deck in
+> Anki and re-import once.
 
 ## Card Types
 

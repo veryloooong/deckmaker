@@ -13,6 +13,7 @@ uv run python deckmaker.py                           # default run (looks for vo
 uv run python deckmaker.py path/to/my_words.csv      # run with specific CSV
 uv run python deckmaker.py path/to/words.csv --no-audio  # skip TTS, use existing audio/ files
 uv run python deckmaker.py path/to/words.csv --anki      # push into running Anki (AnkiConnect addon)
+uv run python deckmaker.py --migrate [collection.anki2]  # rewrite pre-patch note GUIDs in place (Anki closed)
 ```
 
 - No system `python3`; always use `uv run` (or `.venv/bin/python`).
@@ -55,9 +56,11 @@ uv run python deckmaker.py path/to/words.csv --anki      # push into running Ank
   because their fields contain randomly-shuffled distractors that would otherwise change
   the GUID every build (this was the "import resets progress" bug). Re-importing an
   updated deck therefore only adds genuinely new cards.
-- Migration: decks imported before this GUID fix contain old random MCQ GUIDs — the
-  first re-import after the fix adds one duplicate MCQ set. Delete the old deck in Anki
-  and re-import once to get a clean, stable deck; future re-imports are incremental.
+- Migration: decks imported before the stable-GUID fixes carry old content-derived
+  GUIDs. Run `uv run python deckmaker.py --migrate` (with Anki closed) once to
+  back up `collection.anki2` (`collection.anki2.bak`), rewrite existing Word and
+  MCQ note GUIDs in place, and remove 0-review duplicates while keeping study
+  progress. Or delete the old deck in Anki and re-import once if starting fresh.
 - Rewrite of the shipped `dist/deckmaker.exe`: `uv pip install pyinstaller && pyinstaller --onefile --console --name deckmaker --collect-all gtts deckmaker.py`.
   This is automated in `.github/workflows/build-exe.yml`: runs unit tests, compiles `dist/deckmaker.exe`
   on Windows (`windows-latest`), runs a smoke test against `tests/sample.csv`, uploads artifact `deckmaker-windows`,

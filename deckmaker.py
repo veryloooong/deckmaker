@@ -12,6 +12,7 @@ import os
 import random
 import re
 import shutil
+import sqlite3
 import sys
 import time
 import urllib.request
@@ -81,7 +82,11 @@ def resolve_cli_args() -> tuple[str, bool, bool]:
     no_audio = "--no-audio" in sys.argv
     push_anki = "--anki" in sys.argv
     # Every known flag must be listed here, otherwise it is mistaken for the CSV path.
-    args = [a for a in sys.argv[1:] if a not in ("--no-audio", "--no-pause", "--anki")]
+    args = [
+        a
+        for a in sys.argv[1:]
+        if a not in ("--no-audio", "--no-pause", "--anki", "--migrate")
+    ]
 
     target_csv = ""
     if args:
@@ -665,12 +670,177 @@ def push_to_anki(apkg_path: str, url: str = ANKI_CONNECT_URL) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════════
+#  Pre-patch GUID Migration (collection.anki2)
+# ═══════════════════════════════════════════════════════════════════
+
+
+# (AI) Locate Anki profile collection.anki2 files across Windows, macOS, and Linux
+def find_anki_collections() -> list[str]:
+    roots = [
+        os.path.join(os.environ.get("APPDATA", ""), "Anki2"),
+        os.path.expanduser("~/Library/Application Support/Anki2"),
+        os.path.expanduser("~/.local/share/Anki2"),
+        os.path.expanduser("~/.var/app/net.ankiweb.Anki/data/Anki2"),
+    ]
+    found: list[str] = []
+    seen: set[str] = set()
+    for root in roots:
+        if not root or not os.path.isdir(root):
+            continue
+        for entry in sorted(os.listdir(root)):
+            candidate = os.path.abspath(os.path.join(root, entry, "collection.anki2"))
+            if candidate not in seen and os.path.isfile(candidate):
+                found.append(candidate)
+                seen.add(candidate)
+    return found
+
+
+# (AI) Resolve target collection.anki2 path from CLI argument or auto-discovery
+def resolve_collection_path(raw_arg: str = "") -> str:
+    if raw_arg:
+        cleaned = clean_path(raw_arg)
+        if os.path.isdir(cleaned):
+            cleaned = os.path.join(cleaned, "collection.anki2")
+        if not os.path.isfile(cleaned):
+            print(f"Error: Anki collection not found: {cleaned}")
+            sys.exit(1)
+        return cleaned
+
+    found = find_anki_collections()
+    if len(found) == 1:
+        return found[0]
+    if len(found) > 1 and sys.stdin and sys.stdin.isatty():
+        print("Multiple Anki profiles found:")
+        for idx, path in enumerate(found, 1):
+            profile = os.path.basename(os.path.dirname(path))
+            print(f"  [{idx}] {profile} ({path})")
+        try:
+            choice = input("Select profile number [1]: ").strip() or "1"
+            selected = int(choice) - 1
+            if 0 <= selected < len(found):
+                return found[selected]
+        except (ValueError, KeyboardInterrupt, EOFError):
+            print("\nCancelled.")
+            sys.exit(1)
+
+    print("Error: Could not automatically locate a single Anki 'collection.anki2'.")
+    print("Usage: python deckmaker.py --migrate <path_to_collection.anki2>")
+    sys.exit(1)
+
+
+# (AI) Rewrite pre-patch note GUIDs in place and deduplicate notes while keeping study progress
+def migrate_collection(db_path: str) -> tuple[int, int]:
+    if not os.path.isfile(db_path):
+        raise FileNotFoundError(f"Collection not found: {db_path}")
+    if os.path.exists(f"{db_path}-wal"):
+        raise RuntimeError(
+            "Anki appears to be open (WAL file present). Close Anki and try again."
+        )
+
+    shutil.copy2(db_path, f"{db_path}.bak")
+    conn = sqlite3.connect(db_path, timeout=1.0, isolation_level=None)
+    try:
+        conn.create_collation(
+            "unicase",
+            lambda a, b: (a.lower() > b.lower()) - (a.lower() < b.lower()),
+        )
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+        except sqlite3.OperationalError as exc:
+            raise RuntimeError(
+                "Database is locked. Close Anki and try again."
+            ) from exc
+
+        rows = conn.execute(
+            """
+            SELECT n.id, n.guid, n.mid, n.flds,
+                   COALESCE(SUM(c.reps), 0) AS total_reps,
+                   COALESCE(MAX(c.type), 0) AS max_type
+            FROM notes n
+            LEFT JOIN cards c ON c.nid = n.id
+            WHERE n.mid IN (?, ?)
+            GROUP BY n.id
+            """,
+            (MODEL_WORD_ID, MODEL_MCQ_ID),
+        ).fetchall()
+
+        groups: dict[tuple[int, str], list[tuple[int, str, int, int]]] = {}
+        for note_id, guid, mid, flds, total_reps, max_type in rows:
+            fields = flds.split("\x1f")
+            if mid == MODEL_WORD_ID:
+                word = fields[0].strip() if fields else ""
+                if not word:
+                    continue
+                target_guid = guid_for("word", word)
+            elif mid == MODEL_MCQ_ID:
+                if len(fields) < 8:
+                    continue
+                word = fields[1].strip()
+                example = fields[7].strip()
+                if not word or not example:
+                    continue
+                target_guid = guid_for("mcq", word, example)
+            else:
+                continue
+
+            groups.setdefault((mid, target_guid), []).append(
+                (note_id, guid, total_reps, max_type)
+            )
+
+        updated = deleted = 0
+        now_sec = int(time.time())
+        for (_, target_guid), candidates in groups.items():
+            keeper = max(candidates, key=lambda item: (item[2], item[3], -item[0]))
+            keeper_id, keeper_guid, _, _ = keeper
+
+            for note_id, _, _, _ in candidates:
+                if note_id != keeper_id:
+                    conn.execute("DELETE FROM cards WHERE nid = ?", (note_id,))
+                    conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+                    deleted += 1
+
+            if keeper_guid != target_guid:
+                conn.execute(
+                    "UPDATE notes SET guid = ?, mod = ?, usn = -1 WHERE id = ?",
+                    (target_guid, now_sec, keeper_id),
+                )
+                updated += 1
+
+        conn.execute("COMMIT")
+        return updated, deleted
+    except Exception:
+        try:
+            conn.execute("ROLLBACK")
+        except sqlite3.Error:
+            pass
+        raise
+    finally:
+        conn.close()
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  Main
 # ═══════════════════════════════════════════════════════════════════
 
 
 # (AI) Main entrypoint: resolve arguments, parse vocab, generate audio, and compile Anki deck
 def main() -> None:
+    if "--migrate" in sys.argv:
+        args = [
+            a
+            for a in sys.argv[1:]
+            if a not in ("--no-audio", "--no-pause", "--anki", "--migrate")
+        ]
+        db_path = resolve_collection_path(args[0] if args else "")
+        print(f"[Migrate] Backing up and migrating: {db_path}")
+        updated, deleted = migrate_collection(db_path)
+        print(f"  Backup written : {db_path}.bak")
+        print(f"  GUIDs updated  : {updated}")
+        print(f"  Dupes removed  : {deleted}")
+        if getattr(sys, "frozen", False):
+            pause_if_needed()
+        return
+
     csv_file, no_audio, push_anki = resolve_cli_args()
     output_file = get_output_path(csv_file)
 

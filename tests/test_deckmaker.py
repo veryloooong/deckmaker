@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -212,6 +213,138 @@ class TestAnkiPush(unittest.TestCase):
         self.assertEqual(first.guid, edited.guid)
         self.assertNotEqual(first.fields[3], edited.fields[3])
         self.assertNotEqual(first.guid, other.guid)
+
+
+def _create_anki_db(db_path: str) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "CREATE TABLE notes ("
+        "id INTEGER PRIMARY KEY, guid TEXT NOT NULL, mid INTEGER NOT NULL, "
+        "mod INTEGER NOT NULL, usn INTEGER NOT NULL, flds TEXT NOT NULL)"
+    )
+    conn.execute(
+        "CREATE TABLE cards ("
+        "id INTEGER PRIMARY KEY, nid INTEGER NOT NULL, type INTEGER NOT NULL, "
+        "reps INTEGER NOT NULL)"
+    )
+    return conn
+
+
+class TestMigration(unittest.TestCase):
+    # (AI) Test rewriting pre-patch content-derived GUIDs for Word and MCQ notes
+    def test_migrate_collection_rewrites_guids(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "collection.anki2")
+            conn = _create_anki_db(db_path)
+            word_flds = "\x1f".join(
+                [
+                    "abandon",
+                    "/əˈbændən/",
+                    "verb",
+                    "từ bỏ",
+                    "They abandon it.",
+                    "",
+                    "[sound:abandon.mp3]",
+                ]
+            )
+            mcq_flds = "\x1f".join(
+                [
+                    "They _____ it.",
+                    "abandon",
+                    "abduct",
+                    "absorb",
+                    "abstract",
+                    "1 0 0 0",
+                    "từ bỏ",
+                    "They abandon it.",
+                    "verb",
+                    "",
+                ]
+            )
+            conn.execute(
+                "INSERT INTO notes VALUES (1, 'oldwordguid', ?, 0, 0, ?)",
+                (deckmaker.MODEL_WORD_ID, word_flds),
+            )
+            conn.execute("INSERT INTO cards VALUES (10, 1, 2, 5)")
+            conn.execute(
+                "INSERT INTO notes VALUES (2, 'oldmcqguid', ?, 0, 0, ?)",
+                (deckmaker.MODEL_MCQ_ID, mcq_flds),
+            )
+            conn.execute("INSERT INTO cards VALUES (20, 2, 2, 3)")
+            conn.commit()
+            conn.close()
+
+            updated, deleted = deckmaker.migrate_collection(db_path)
+            self.assertEqual(updated, 2)
+            self.assertEqual(deleted, 0)
+            self.assertTrue(os.path.isfile(f"{db_path}.bak"))
+
+            conn = sqlite3.connect(db_path)
+            rows = dict(conn.execute("SELECT id, guid FROM notes").fetchall())
+            conn.close()
+            self.assertEqual(rows[1], deckmaker.guid_for("word", "abandon"))
+            self.assertEqual(
+                rows[2], deckmaker.guid_for("mcq", "abandon", "They abandon it.")
+            )
+
+    # (AI) Test deduplicating a pre-patch studied note and a post-patch 0-rep duplicate
+    def test_migrate_collection_deduplicates_keeping_progress(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "collection.anki2")
+            conn = _create_anki_db(db_path)
+            word_flds = "\x1f".join(
+                [
+                    "abandon",
+                    "/əˈbændən/",
+                    "verb",
+                    "từ bỏ",
+                    "They abandon it.",
+                    "",
+                    "[sound:abandon.mp3]",
+                ]
+            )
+            target_guid = deckmaker.guid_for("word", "abandon")
+            conn.execute(
+                "INSERT INTO notes VALUES (1, 'oldwordguid', ?, 0, 0, ?)",
+                (deckmaker.MODEL_WORD_ID, word_flds),
+            )
+            conn.execute("INSERT INTO cards VALUES (10, 1, 2, 7)")
+            conn.execute(
+                "INSERT INTO notes VALUES (2, ?, ?, 0, 0, ?)",
+                (target_guid, deckmaker.MODEL_WORD_ID, word_flds),
+            )
+            conn.execute("INSERT INTO cards VALUES (20, 2, 0, 0)")
+            conn.commit()
+            conn.close()
+
+            updated, deleted = deckmaker.migrate_collection(db_path)
+            self.assertEqual(updated, 1)
+            self.assertEqual(deleted, 1)
+
+            conn = sqlite3.connect(db_path)
+            notes = conn.execute("SELECT id, guid FROM notes").fetchall()
+            cards = conn.execute("SELECT id, nid, reps FROM cards").fetchall()
+            conn.close()
+            self.assertEqual(notes, [(1, target_guid)])
+            self.assertEqual(cards, [(10, 1, 7)])
+
+    # (AI) Test that --migrate is filtered out of CSV positional arguments
+    def test_migrate_flag_in_cli(self):
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", suffix=".csv", delete=False
+        ) as f:
+            f.write("Từ,Phát âm,Loại từ,Ý nghĩa,Ví dụ,Ghi chú\n")
+            temp_path = f.name
+
+        original_argv = sys.argv
+        try:
+            sys.argv = ["deckmaker.py", "--migrate", temp_path]
+            csv_file, _, _ = deckmaker.resolve_cli_args()
+            self.assertEqual(csv_file, os.path.abspath(temp_path))
+        finally:
+            sys.argv = original_argv
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
 
 if __name__ == "__main__":
